@@ -11,8 +11,9 @@ const registerPhed = async (req, res) => {
 
     // Check if PHED ID, contact, or email already exists
     const existingPhed = await Phed.findOne({
-      $or: [{ phedId }, { contact }, { email }],
+      $or: [{ phedId }, { email }],
     });
+ 
 
     if (existingPhed) {
       return res.status(400).json({
@@ -21,13 +22,15 @@ const registerPhed = async (req, res) => {
       });
     }
 
+    const hashPassword= await bcrypt.hash(password, 10);
+
     // Create new PHED user
     const newPhed = new Phed({
       name,
       contact,
       email,
       phedId,
-      password,
+      password : hashPassword,
       role, // Assign role from request body or default to 'PHED'
     });
 

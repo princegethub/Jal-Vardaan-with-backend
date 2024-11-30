@@ -4,6 +4,7 @@ const { Phed } = require("../model/phedModel");
 const { Grampanchayat } = require("../model/gpModel");
 const { User } = require("../model/userModel");
 
+
 const userModels = {
   PHED: Phed,
   GP: Grampanchayat,
@@ -13,30 +14,38 @@ const userModels = {
 const loginUser = async (req, res) => {
   try {
     const { userType, id, email, password } = req.body;
+    console.log('req.body: ', req.body);
 
-    if (!userType && (!id || !email) && !password) {
-      return res
-        .status(400)
-        .json({ message: "Missing required fields. Please check your input." });
+    if (!userType || (!id && !email) || !password) {
+      return res.status(400).json({ message: "Missing required fields. Please check your input." });
     }
 
-    // Check if the provided userType exists
+  
+
     if (!userModels[userType]) {
       return res.status(400).json({ message: "Invalid user type" });
     }
 
-    // Select the appropriate model based on userType
     const Model = userModels[userType];
+    console.log('Model: ', Model);
+    const user = await Model.findOne({ $or: [{ _id: id }, { email }] });
 
-    // Find user by either email or ID
-    const user = await Model.findOne({ $or: [{ id }, { email }] });
+  
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     // Verify the password
+    // const isMatch = await bcrypt.compare(password, user.password);
+
+    console.log('Plaintext password:', password);
+    console.log('Hashed password from database:', user.password);
+    
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log('Do passwords match?', isMatch);
+    
+
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
@@ -63,7 +72,7 @@ const loginUser = async (req, res) => {
           name: user.name,
           email: user.email,
           role: user.role,
-          proifilePicture: user.profilePicture,
+          profilePicture: user.profilePicture,
           contact: user.contact,
         },
       });
@@ -72,6 +81,7 @@ const loginUser = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
 
 const logout = async (req, res) => {
   try {

@@ -118,11 +118,11 @@ const FundRequestSchema = new mongoose.Schema({
 
 // Password hashing middleware for GP Schema
 // Apply middleware
-GpSchema.pre("save", hashPassword);
-GpSchema.pre("findOneAndUpdate", updateUpdatedAt);
-GpSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
+// GpSchema.pre("save", hashPassword);
+// GpSchema.pre("findOneAndUpdate", updateUpdatedAt);
+// GpSchema.methods.matchPassword = async function (enteredPassword) {
+//   return await bcrypt.compare(enteredPassword, this.password);
+// };
 
 // Token generation method for GP Schema
 GpSchema.methods.generateAuthToken = function () {

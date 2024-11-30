@@ -25,12 +25,12 @@ const { hashPassword, updateUpdatedAt } = require("../middleweres/Hashing.js");
 
 // Middleware to hash password before saving and set updatedAt
 // Apply middleware
-PhedSchema.pre("save", hashPassword);
-PhedSchema.pre('findOneAndUpdate', updateUpdatedAt);
-// Method to check if the provided password matches the hashed password
-PhedSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
+// PhedSchema.pre("save", hashPassword);
+// PhedSchema.pre('findOneAndUpdate', updateUpdatedAt);
+// // Method to check if the provided password matches the hashed password
+// PhedSchema.methods.matchPassword = async function (enteredPassword) {
+//   return await bcrypt.compare(enteredPassword, this.password);
+// };
 
 
 // Phed Announcement Schema

@@ -29,8 +29,8 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Apply middleware
-UserSchema.pre("save", hashPassword);
-UserSchema.pre('findOneAndUpdate', updateUpdatedAt);
+// UserSchema.pre("save", hashPassword);
+// UserSchema.pre('findOneAndUpdate', updateUpdatedAt);
 UserSchema.pre('save', async function (next) {
   // Generate a unique consumerId
   if (!this.consumerId) {
@@ -40,9 +40,9 @@ UserSchema.pre('save', async function (next) {
 });
 
 // Method to check if the provided password matches the hashed password
-UserSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
+// UserSchema.methods.matchPassword = async function (enteredPassword) {
+//   return await bcrypt.compare(enteredPassword, this.password);
+// };
 
 const UserComplaintSchema = new mongoose.Schema({
   category: { type: String, required: true },
