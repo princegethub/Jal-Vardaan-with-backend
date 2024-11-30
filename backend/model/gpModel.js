@@ -1,8 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const hashPassword = require("./commanUtility")
-const updateUpdatedAt = require("./commanUtility")
 const { hashPassword, updateUpdatedAt } = require("../middleweres/Hashing.js");
 
 
@@ -137,7 +135,7 @@ GpSchema.methods.generateAuthToken = function () {
 };
 
 // Model creation
-const Gp = mongoose.model("Gp", GpSchema);
+const Grampanchayat = mongoose.model("Gp", GpSchema);
 const GpAnnouncement = mongoose.model("GpAnnouncement", GpAnnouncementSchema);
 const GpComplaint = mongoose.model("GpComplaint", GpComplaintSchema);
 const FundRequest = mongoose.model("FundRequest", FundRequestSchema);
@@ -147,7 +145,7 @@ const Income = mongoose.model("Income", IncomeSchema);
 const Expenditure = mongoose.model("Expenditure", ExpenditureSchema);
 
 module.exports = {
-  Gp,
+  Grampanchayat,
   GpAnnouncement,
   GpComplaint,
   FundRequest,

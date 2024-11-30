@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
 const connectDB = require('./config/dbConnection');
 const phedRoute  = require('./routers/phedRoutes');
+const authRoute  = require('./routers/authRoutes');
 
 dotenv.config();
 const app = express();
@@ -24,6 +25,7 @@ app.use(cookieParser());
 app.use("/api/v1/phed", phedRoute);
 // app.use("/v1/api/grampanchayat", require('./routers/gramPanchyat'));
 // app.use("/v1/api/user", require('./routers/user.js'));
+app.use("/api/v1/login", authRoute);
 
 // Test Route
 app.get("/", (req, res) => {
