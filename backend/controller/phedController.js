@@ -1,4 +1,6 @@
 const { Phed } = require("../model/phedModel");
+const { Grampanchayat , Asset  , Inventory , GpComplaint} = require("../model/gpModel");
+
 const bcrypt = require("bcryptjs");
 
 const registerPhed = async (req, res) => {
@@ -109,10 +111,11 @@ const updatePhed = async (req, res) => {
 
 const getGpList = async (req, res) => {
   try {
-    const { phedId } = req.user; // Extract `phedId` from the route parameter
+    const { id } = req.user; // Extract `id` from the route parameter
+  
 
     // Find the PHED user and populate the gpList
-    const phed = await Phed.findOne({ _id: phedId }).populate("gpList");
+    const phed = await Phed.findOne({ _id: id }).populate("gpList");
 
     if (!phed) {
       return res.status(404).json({ message: "PHED user not found." });
@@ -131,8 +134,149 @@ const getGpList = async (req, res) => {
 
 
 
+
+const getGpListWithAssets = async (req, res) => {
+  try {
+    // Assuming you have a way to identify the logged-in PHED user
+    const phedId = req.user.phedId; // Example: Assuming user data is attached to req.user
+
+    // Find the PHED user and populate the gpList with assets
+    const phed = await Phed.findOne({ phedId })
+      .populate({
+        path: 'gpList',
+        populate: {
+          path: 'assets',
+          model: 'Asset',
+        }
+      })
+      .exec();
+
+    if (!phed) {
+      return res.status(404).json({ message: "PHED user not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "GP list with assets retrieved successfully",
+      data: phed.gpList,
+    });
+  } catch (error) {
+    console.error("Error fetching GP list with assets:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+
+
+
+const getGpListWithAssetsAndInventory = async (req, res) => {
+  try {
+    // Assuming you have a way to identify the logged-in PHED user
+    const phedId = req.user.phedId; // Example: Assuming user data is attached to req.user
+
+    // Find the PHED user and populate the gpList with assets and inventory
+    const phed = await Phed.findOne({ phedId })
+      .populate({
+        path: 'gpList',
+        populate: [
+          {
+            path: 'assets',
+            model: 'Asset',
+          },
+          {
+            path: 'inventory',
+            model: 'Inventory',
+          }
+        ]
+      })
+      .exec();
+
+    if (!phed) {
+      return res.status(404).json({ message: "PHED user not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "GP list with assets and inventory retrieved successfully",
+      data: phed.gpList,
+    });
+  } catch (error) {
+    console.error("Error fetching GP list with assets and inventory:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+const getGpInventoryList = async (req, res) => {
+  try {
+    const phedId = req.user.phedId; // Get the logged-in PHED user ID
+
+    // Find the PHED user and populate the gpList with their inventory
+    const phed = await Phed.findOne({ phedId })
+      .populate({
+        path: 'gpList',
+        populate: {
+          path: 'inventory',
+          model: 'Inventory',
+        }
+      })
+      .exec();
+
+    if (!phed) {
+      return res.status(404).json({ message: "PHED user not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "GP list with inventory data retrieved successfully",
+      data: phed.gpList,
+    });
+  } catch (error) {
+    console.error("Error fetching GP inventory data:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+
+// Ek specific GP ke alerts ko fetch karne ka function
+const getAlertsForGp = async (req, res) => {
+  try {
+    const gpId = req.params.gpId;
+
+    // GP ko find karke uske alerts ko populate karte hain
+    const gp = await Grampanchayat.findById(gpId).populate({
+      path: 'alert',
+      model: 'GpComplaint',
+    });
+
+    if (!gp) {
+      return res.status(404).json({ message: 'GP nahi mila' });
+    }
+
+    // Response bhejte hain alerts ke data ke sath
+    res.status(200).json({
+      success: true,
+      data: gp.alert, // Ye GP ke saare alerts ki details hogi
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  }
+};
+
+
+
+
+
+
 module.exports = {
   registerPhed,
   updatePhed, // Export the register controller function
   getGpList, // Export the getGpList controller function
+  getGpListWithAssets,
+  getGpListWithAssetsAndInventory,
+  getGpInventoryList,
+  getAlertsForGp,
 };
