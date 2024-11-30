@@ -25,7 +25,7 @@ app.use(cookieParser());
 app.use("/api/v1/phed", phedRoute);
 // app.use("/v1/api/grampanchayat", require('./routers/gramPanchyat'));
 // app.use("/v1/api/user", require('./routers/user.js'));
-app.use("/api/v1/login", authRoute);
+app.use("/api/v1", authRoute);
 
 // Test Route
 app.get("/", (req, res) => {

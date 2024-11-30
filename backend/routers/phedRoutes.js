@@ -1,11 +1,10 @@
 const express = require("express");
-const { registerPhed } = require("../controller/phedController");
-const { loginUser } = require("../controller/loginController");
+const { registerPhed , updatePhed } = require("../controller/phedController");
 const router = express.Router();
 
 
-router.route("/login").post(loginUser);
-router.route("/register").post(registerPhed);
 
+router.route("/register").post(registerPhed);
+router.route("/:phedId").put(updatePhed);
 
 module.exports = router;

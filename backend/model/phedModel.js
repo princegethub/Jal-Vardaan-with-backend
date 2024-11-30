@@ -12,7 +12,7 @@ const { hashPassword, updateUpdatedAt } = require("../middleweres/Hashing.js");
   password: { type: String, required: true },
   phedId: { type: String, required: true, unique: true },
   role: { type: String, default: "PHED" },
-  profilePicture: String,
+  profilePicture: {type: String, default: 'https://static.vecteezy.com/system/resources/previews/022/450/297/original/3d-minimal-purple-user-profile-avatar-icon-in-circle-white-frame-design-vector.jpg'},
   alert: [{ type: mongoose.Schema.Types.ObjectId, ref: "GpComplaint", index: true }],
   announcement: [{ type: mongoose.Schema.Types.ObjectId, ref: "PhedAnnouncement", index: true }],
   gpList: [{ type: mongoose.Schema.Types.ObjectId, ref: "Gp", index: true }],

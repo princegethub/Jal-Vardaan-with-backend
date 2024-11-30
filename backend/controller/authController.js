@@ -1,4 +1,4 @@
-const bcrypt = require("bcryptjs");
+ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Phed } = require("../model/phedModel");
 const { Grampanchayat } = require("../model/gpModel");
@@ -15,7 +15,9 @@ const loginUser = async (req, res) => {
     const { userType, id, email, password } = req.body;
 
     if (!userType && (!id || !email) && !password) {
-      return res.status(400).json({ message: "Missing required fields. Please check your input." });
+      return res
+        .status(400)
+        .json({ message: "Missing required fields. Please check your input." });
     }
 
     // Check if the provided userType exists
@@ -71,6 +73,19 @@ const loginUser = async (req, res) => {
   }
 };
 
+const logout = async (req, res) => {
+  try {
+    // Remove JWT token from the cookie
+    res.clearCookie("token");
+    return res
+      .status(200)
+      .json({ success: true, message: "Logged out successfully" });
+  } catch (error) {
+    console.error("Error in logout:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
-  loginUser,
+  loginUser, logout
 };
