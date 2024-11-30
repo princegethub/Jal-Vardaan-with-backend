@@ -124,15 +124,7 @@ const FundRequestSchema = new mongoose.Schema({
 //   return await bcrypt.compare(enteredPassword, this.password);
 // };
 
-// Token generation method for GP Schema
-GpSchema.methods.generateAuthToken = function () {
-  const token = jwt.sign(
-    { _id: this._id, grampanchayatId: this.grampanchayatId },
-    process.env.JWT_SECRET,
-    { expiresIn: "1h" }
-  );
-  return token;
-};
+
 
 // Model creation
 const Grampanchayat = mongoose.model("Gp", GpSchema);
