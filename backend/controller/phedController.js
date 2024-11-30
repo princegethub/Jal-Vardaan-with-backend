@@ -544,7 +544,8 @@ const viewGpDetails = async (req, res) => {
 
 const phedProfile = async (req, res) => {
   try {
-    const { phedId } = req.user; // PHED user ID from the authenticated token
+    const  phedId  = req.user.id; // PHED user ID from the authenticated token
+
 
     if (!phedId) {
       return res.status(403).json({ message: "Unauthorized access." });
@@ -594,4 +595,5 @@ module.exports = {
   updateGp,
   deleteGp,
   viewGpDetails,
+  phedProfile
 };
