@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
 const connectDB = require('./config/dbConnection');
+const phedRoute  = require('./routers/phedRoutes');
 
 dotenv.config();
 const app = express();
@@ -20,7 +21,7 @@ app.use(cors());
 app.use(cookieParser());
 
 // API Routes
-// app.use("/v1/api/phed", require('./routers/phed'));
+app.use("/api/v1/phed", phedRoute);
 // app.use("/v1/api/grampanchayat", require('./routers/gramPanchyat'));
 // app.use("/v1/api/user", require('./routers/user.js'));
 

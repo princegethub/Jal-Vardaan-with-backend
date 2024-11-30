@@ -4,7 +4,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 dotenv.config();
-console.log('process.env.DATABASE_URL: ', process.env.DATABASE_URL);
+// console.log('process.env.DATABASE_URL: ', process.env.DATABASE_URL);
 
 const connectDB = async () => {
   if (!process.env.DATABASE_URL) {
