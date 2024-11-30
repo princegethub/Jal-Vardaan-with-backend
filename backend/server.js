@@ -7,6 +7,7 @@ const dotenv = require('dotenv');
 const connectDB = require('./config/dbConnection');
 const phedRoute  = require('./routers/phedRoutes');
 const authRoute  = require('./routers/authRoutes');
+const assetRoutes = require('./routers/assetRoutes');
 
 dotenv.config();
 const app = express();
@@ -26,6 +27,7 @@ app.use("/api/v1/phed", phedRoute);
 // app.use("/v1/api/grampanchayat", require('./routers/gramPanchyat'));
 // app.use("/v1/api/user", require('./routers/user.js'));
 app.use("/api/v1", authRoute);
+app.use('/api/v1/assets', assetRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
