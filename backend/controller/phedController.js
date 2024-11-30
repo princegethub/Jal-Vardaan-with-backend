@@ -104,10 +104,32 @@ const updatePhed = async (req, res) => {
   }
 };
 
+const getGpList = async (req, res) => {
+  try {
+    const { phedId } = req.user; // Extract `phedId` from the route parameter
+
+    // Find the PHED user and populate the gpList
+    const phed = await Phed.findOne({ _id: phedId }).populate("gpList");
+
+    if (!phed) {
+      return res.status(404).json({ message: "PHED user not found." });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "GP list fetched successfully.",
+      data: phed.gpList, // Return the populated list of GPs
+    });
+  } catch (error) {
+    console.error("Error fetching GP list:", error);
+    return res.status(500).json({ message: "Server error. Please try again later." });
+  }
+};
 
 
 
 module.exports = {
   registerPhed,
   updatePhed, // Export the register controller function
+  getGpList, // Export the getGpList controller function
 };
