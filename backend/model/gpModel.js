@@ -30,7 +30,7 @@ const GpSchema = new mongoose.Schema({
   userList: [
     { type: mongoose.Schema.Types.ObjectId, ref: "User", index: true },
   ],
-  assets: [{ type: mongoose.Schema.Types.ObjectId, ref: "Asset", index: true }],
+  assets: [{ type: mongoose.Schema.Types.ObjectId, ref: "AssetPhed", index: true }],
   inventory: [
     { type: mongoose.Schema.Types.ObjectId, ref: "Inventory", index: true },
   ],

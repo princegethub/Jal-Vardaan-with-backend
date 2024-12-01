@@ -8,7 +8,7 @@ const {
 } = require('../controller/assetController');
 
 // Route to add a new asset
-router.post('/add-asset', addAssetPhed);
+router.post('/add-asset',addAssetPhed);
 
 // Route to add quantity to an existing asset
 router.put('/add-quantity', addQuantityToAssetPhed);
