@@ -8,7 +8,11 @@ const { hashPassword, updateUpdatedAt } = require("../middleweres/Hashing.js");
 const GpSchema = new mongoose.Schema({
   name: { type: String, required: true },
   contact: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: {
+    type: String,
+    unique: true,  // This enforces unique values for the 'email' field
+    required: false, // Set to false if email is not mandatory
+},
   password: { type: String, required: true },
   lgdCode: { type: String, required: true },
   role: { type: String, default: "GP" },
@@ -26,7 +30,7 @@ const GpSchema = new mongoose.Schema({
   userList: [
     { type: mongoose.Schema.Types.ObjectId, ref: "User", index: true },
   ],
-  assets: [{ type: mongoose.Schema.Types.ObjectId, ref: "Asset", index: true }],
+  assets: [{ type: mongoose.Schema.Types.ObjectId, ref: "AssetPhed", index: true }],
   inventory: [
     { type: mongoose.Schema.Types.ObjectId, ref: "Inventory", index: true },
   ],

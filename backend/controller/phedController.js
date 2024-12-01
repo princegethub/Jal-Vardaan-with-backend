@@ -1,5 +1,11 @@
 const { Phed, PhedAnnouncement } = require("../model/phedModel");
-const { Grampanchayat , Asset  , Inventory , GpComplaint} = require("../model/gpModel");
+const {
+  Grampanchayat,
+  Asset,
+  Inventory,
+  GpComplaint,
+} = require("../model/gpModel");
+const { v4: uuidv4 } = require("uuid");
 
 const bcrypt = require("bcryptjs");
 
@@ -15,7 +21,6 @@ const registerPhed = async (req, res) => {
     const existingPhed = await Phed.findOne({
       $or: [{ phedId }, { email }],
     });
- 
 
     if (existingPhed) {
       return res.status(400).json({
@@ -24,7 +29,7 @@ const registerPhed = async (req, res) => {
       });
     }
 
-    const hashPassword= await bcrypt.hash(password, 10);
+    const hashPassword = await bcrypt.hash(password, 10);
 
     // Create new PHED user
     const newPhed = new Phed({
@@ -32,7 +37,7 @@ const registerPhed = async (req, res) => {
       contact,
       email,
       phedId,
-      password : hashPassword,
+      password: hashPassword,
       role, // Assign role from request body or default to 'PHED'
     });
 
@@ -61,7 +66,7 @@ const registerPhed = async (req, res) => {
 
 const updatePhed = async (req, res) => {
   try {
-    const  phedId  = req.user.id; // Extract phedId from the route parameter
+    const phedId = req.user.id; // Extract phedId from the route parameter
     const { name, profilePicture, email, contact } = req.body; // Extract fields from the request body
 
     // Validate that at least one field is provided for update
@@ -81,9 +86,11 @@ const updatePhed = async (req, res) => {
     // Check if the new email is already in use by another user
     if (email && email !== existingPhed.email) {
       const emailExists = await Phed.findOne({ email });
-      console.log('emailExists: ', emailExists);
+      console.log("emailExists: ", emailExists);
       if (emailExists) {
-        return res.status(400).json({ message: "Email is already in use by another user." });
+        return res
+          .status(400)
+          .json({ message: "Email is already in use by another user." });
       }
     }
 
@@ -112,7 +119,6 @@ const updatePhed = async (req, res) => {
 const getGpList = async (req, res) => {
   try {
     const { id } = req.user; // Extract `id` from the route parameter
-  
 
     // Find the PHED user and populate the gpList
     const phed = await Phed.findOne({ _id: id }).populate("gpList");
@@ -128,30 +134,28 @@ const getGpList = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching GP list:", error);
-    return res.status(500).json({ message: "Server error. Please try again later." });
+    return res
+      .status(500)
+      .json({ message: "Server error. Please try again later." });
   }
 };
-
-
-
 
 const getGpListWithAssets = async (req, res) => {
   try {
     // Assuming you have a way to identify the logged-in PHED user
     const phedId = req.user.id; // Example: Assuming user data is attached to req.user
 
-
     // Find the PHED user and populate the gpList with assets
     const phed = await Phed.findOne({ _id: phedId })
-    .populate({
-      path: 'gpList',
-      populate: {
-        path: 'assets',
-        model: 'Asset',
-      }
-    })
-    .exec();
-    
+      .populate({
+        path: "gpList",
+        populate: {
+          path: "assets",
+          model: "Asset",
+        },
+      })
+      .exec();
+
     if (!phed) {
       return res.status(404).json({ message: "PHED user not found" });
     }
@@ -167,29 +171,25 @@ const getGpListWithAssets = async (req, res) => {
   }
 };
 
-
-
-
-
 const getGpListWithAssetsAndInventory = async (req, res) => {
   try {
     // Assuming you have a way to identify the logged-in PHED user
-  const phedId = req.user.id;// Example: Assuming user data is attached to req.user
-    
+    const phedId = req.user.id; // Example: Assuming user data is attached to req.user
+
     // Find the PHED user and populate the gpList with assets and inventory
     const phed = await Phed.findOne({ _id: phedId })
       .populate({
-        path: 'gpList',
+        path: "gpList",
         populate: [
           {
-            path: 'assets',
-            model: 'Asset',
+            path: "assets",
+            model: "Asset",
           },
           {
-            path: 'inventory',
-            model: 'Inventory',
-          }
-        ]
+            path: "inventory",
+            model: "Inventory",
+          },
+        ],
       })
       .exec();
 
@@ -208,19 +208,18 @@ const getGpListWithAssetsAndInventory = async (req, res) => {
   }
 };
 
-
 const getGpInventoryList = async (req, res) => {
   try {
-  const phedId = req.user.id;// Get the logged-in PHED user ID
+    const phedId = req.user.id; // Get the logged-in PHED user ID
 
     // Find the PHED user and populate the gpList with their inventory
     const phed = await Phed.findOne({ _id: phedId })
       .populate({
-        path: 'gpList',
+        path: "gpList",
         populate: {
-          path: 'inventory',
-          model: 'Inventory',
-        }
+          path: "inventory",
+          model: "Inventory",
+        },
       })
       .exec();
 
@@ -239,18 +238,16 @@ const getGpInventoryList = async (req, res) => {
   }
 };
 
-
-
 // Ek specific GP ke alerts ko fetch karne ka function
 const getAllAlertsForPhed = async (req, res) => {
   try {
-  const phedId = req.user.id;// Assuming PHED ID is stored in `req.user`
+    const phedId = req.user.id; // Assuming PHED ID is stored in `req.user`
 
     // Find PHED and populate GP complaints (alerts)
     const phed = await Phed.findOne({ _id: phedId }).populate({
       path: "gpList",
       populate: {
-        path: "complaint", 
+        path: "complaint",
         model: "GpComplaint",
       },
     });
@@ -268,24 +265,22 @@ const getAllAlertsForPhed = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
-
-
-
-
-
-
 
 // Create a new announcement
 const createPhedAnnouncement = async (req, res) => {
   try {
-  const phedId = req.user.id;// Assuming phedId comes from logged-in PHED user
+    const phedId = req.user.id; // Assuming phedId comes from logged-in PHED user
     const { gpId, message } = req.body;
 
     if (!gpId || !message) {
-      return res.status(400).json({ message: "GP ID and message are required" });
+      return res
+        .status(400)
+        .json({ message: "GP ID and message are required" });
     }
 
     // Create a new announcement
@@ -312,14 +307,16 @@ const createPhedAnnouncement = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
 
 // Get all announcements for a PHED
 const getPhedAnnouncements = async (req, res) => {
   try {
-  const phedId = req.user.id;// Assuming phedId comes from logged-in PHED user
+    const phedId = req.user.id; // Assuming phedId comes from logged-in PHED user
 
     const phed = await Phed.findOne({ _id: phedId }).populate({
       path: "announcement",
@@ -336,7 +333,9 @@ const getPhedAnnouncements = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
 
@@ -370,14 +369,15 @@ const deletePhedAnnouncement = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
 
-
 const getFinanceOverview = async (req, res) => {
   try {
-  const phedId = req.user.id;// Assuming logged-in PHED's ID
+    const phedId = req.user.id; // Assuming logged-in PHED's ID
     const { gpId } = req.params; // GP ID passed in params
 
     // Fetch GP details along with its income and expenditure
@@ -417,32 +417,68 @@ const getFinanceOverview = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
-
-
 const addGp = async (req, res) => {
   try {
-    const { phedId } = req.user; // Ensure the request is from a PHED user
-    const { state, district, villageName, lgdCode, name, aadhar, contact, email, password , gpType = 'G' } = req.body;
+    const phedId = req.user.id; // Ensure the request is from a PHED user
+    console.log('phedId: ', phedId);
+
+    const {
+      state,
+      district,
+      villageName,
+      lgdCode,
+      name,
+      aadhar,
+      contact,
+      email, // Added the email field
+      password,
+      userType = "GP",
+    } = req.body;
 
     if (!phedId) {
       return res.status(403).json({ message: "Unauthorized access." });
     }
 
     // Validate required fields
-    if (!state || !district || !villageName || !lgdCode || !name || !aadhar || !contact || !password) {
-      return res.status(400).json({ message: "All fields are required." });
+    if (
+      !state ||
+      !district ||
+      !villageName ||
+      !lgdCode ||
+      !name ||
+      !aadhar ||
+      !contact ||
+      !password
+    ) {
+      return res.status(400).json({ message: "All fields are required except email." });
     }
 
-    // Check if GP with the same LGD Code or Aadhar exists
-    const existingGp = await Grampanchayat.findOne({ $or: [{ lgdCode }, { aadhar }] });
+    // Check if GP with the same LGD Code, Aadhar, or email exists
+    const existingGp = await Grampanchayat.findOne({
+      $or: [
+        { lgdCode: lgdCode },
+        { aadhar: aadhar },
+        { email: email } // Check for email duplicates
+      ],
+    });
+    console.log('existingGp: ', existingGp);
     if (existingGp) {
-      return res.status(400).json({ message: "GP with this LGD Code or Aadhar already exists." });
+      const duplicateFields = [];
+      if (existingGp.lgdCode === lgdCode) duplicateFields.push('LGD Code');
+      if (existingGp.aadhar === aadhar) duplicateFields.push('Aadhar');
+      if (existingGp.email === email) duplicateFields.push('Email');
+
+      return res.status(400).json({
+        message: `GP with the same ${duplicateFields.join(', ')} already exists.`,
+      });
     }
 
-    // Create new GP
+    // Create new GP with a unique `grampanchayatId`
     const newGp = new Grampanchayat({
       state,
       district,
@@ -451,12 +487,21 @@ const addGp = async (req, res) => {
       name,
       aadhar,
       contact,
-      email,
+      grampanchayatId: uuidv4(),
+      email, // Added the email field
       password,
       createdBy: phedId, // Track which PHED user created this GP
     });
 
+    // Save the new GP to the database
     await newGp.save();
+
+    // Add the new GP's ID to the `phed` document
+    const phed = await Phed.findOne({ _id: phedId });
+    if (phed) {
+      await phed.updateOne({ $push: { gpList: newGp._id } }); // Push the new GP's ID into the `gpList` array
+    }
+
     res.status(201).json({ message: "GP added successfully", gp: newGp });
   } catch (error) {
     console.error(error);
@@ -465,11 +510,9 @@ const addGp = async (req, res) => {
 };
 
 
-
-
 const updateGp = async (req, res) => {
   try {
-    const { phedId } = req.user; // Ensure the request is from a PHED user
+    const  phedId  = req.user.id; // Ensure the request is from a PHED user
     const { gpId } = req.params;
     const { villageName, name, contact, lgdCode, aadhar } = req.body;
 
@@ -495,14 +538,15 @@ const updateGp = async (req, res) => {
     res.status(200).json({ message: "GP updated successfully", gp: updatedGp });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
 
-
 const deleteGp = async (req, res) => {
   try {
-    const { phedId } = req.user; // Ensure the request is from a PHED user
+    const  phedId  = req.user.id; // Ensure the request is from a PHED user
     const { gpId } = req.params;
 
     if (!phedId) {
@@ -519,33 +563,37 @@ const deleteGp = async (req, res) => {
     res.status(200).json({ message: "GP deleted successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
 
 const viewGpDetails = async (req, res) => {
   try {
-    const { phedId } = req.user; // Ensure the request is from a PHED user
+    const  phedId  = req.user.id; // Ensure the request is from a PHED user
 
     if (!phedId) {
       return res.status(403).json({ message: "Unauthorized access." });
     }
 
     // Fetch GP list
-    const gps = await Grampanchayat.find().select("name lgdCode state district villageName contact");
+    const gps = await Grampanchayat.find().select(
+      "name lgdCode state district villageName contact"
+    );
 
     res.status(200).json({ message: "GPs fetched successfully", gps });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
 
-
 const phedProfile = async (req, res) => {
   try {
-    const  phedId  = req.user.id; // PHED user ID from the authenticated token
-
+    const phedId = req.user.id; // PHED user ID from the authenticated token
 
     if (!phedId) {
       return res.status(403).json({ message: "Unauthorized access." });
@@ -573,12 +621,6 @@ const phedProfile = async (req, res) => {
   }
 };
 
-
-
-
-  
-
-
 module.exports = {
   registerPhed,
   updatePhed, // Export the register controller function
@@ -595,5 +637,5 @@ module.exports = {
   updateGp,
   deleteGp,
   viewGpDetails,
-  phedProfile
+  phedProfile,
 };
