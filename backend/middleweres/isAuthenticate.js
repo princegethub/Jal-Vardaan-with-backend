@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const protectRoute = (req, res, next) => {
+const authenticate = (req, res, next) => {
   try {
     // Get token from headers
     // const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
@@ -24,5 +24,5 @@ const protectRoute = (req, res, next) => {
 };
 
 module.exports = {
-  protectRoute,
+  authenticate,
 };

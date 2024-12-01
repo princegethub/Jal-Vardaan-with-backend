@@ -18,7 +18,13 @@ const { hashPassword, updateUpdatedAt } = require("../middleweres/Hashing.js");
   gpList: [{ type: mongoose.Schema.Types.ObjectId, ref: "Gp", index: true }],
   requestFund: [{ type: mongoose.Schema.Types.ObjectId, ref: "FundRequest", index: true }],
   firebaseToken: String,
-  // financeOverview: [{ type: mongoose.Schema.Types.ObjectId, ref: "GpFinanceOverview", index: true }],
+  financeOverview: [
+    {
+      gpId: { type: mongoose.Schema.Types.ObjectId, ref: "Gp", required: true },
+      income: [{ type: mongoose.Schema.Types.ObjectId, ref: "Income" }],
+      expenditure: [{ type: mongoose.Schema.Types.ObjectId, ref: "Expenditure" }],
+    },
+  ],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -39,6 +45,8 @@ const PhedAnnouncementSchema = new mongoose.Schema({
   message: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
+
+
 
 const Phed = mongoose.model("Phed", PhedSchema);
 const PhedAnnouncement = mongoose.model("PhedAnnouncement", PhedAnnouncementSchema);
