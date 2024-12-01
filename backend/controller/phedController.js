@@ -61,7 +61,7 @@ const registerPhed = async (req, res) => {
 
 const updatePhed = async (req, res) => {
   try {
-    const { phedId } = req.params; // Extract phedId from the route parameter
+    const  phedId  = req.user.id; // Extract phedId from the route parameter
     const { name, profilePicture, email, contact } = req.body; // Extract fields from the request body
 
     // Validate that at least one field is provided for update
@@ -425,7 +425,7 @@ const getFinanceOverview = async (req, res) => {
 const addGp = async (req, res) => {
   try {
     const { phedId } = req.user; // Ensure the request is from a PHED user
-    const { state, district, villageName, lgdCode, name, aadhar, contact, email, password } = req.body;
+    const { state, district, villageName, lgdCode, name, aadhar, contact, email, password , gpType = 'G' } = req.body;
 
     if (!phedId) {
       return res.status(403).json({ message: "Unauthorized access." });

@@ -14,37 +14,34 @@ const userModels = {
 const loginUser = async (req, res) => {
   try {
     const { userType, id, email, password } = req.body;
-    console.log('req.body: ', req.body);
+    console.log("req.body: ", req.body);
 
     if (!userType || (!id && !email) || !password) {
-      return res.status(400).json({ message: "Missing required fields. Please check your input." });
+      return res
+        .status(400)
+        .json({ message: "Missing required fields. Please check your input." });
     }
-
-  
 
     if (!userModels[userType]) {
       return res.status(400).json({ message: "Invalid user type" });
     }
 
     const Model = userModels[userType];
-    console.log('Model: ', Model);
-    const user = await Model.findOne({ $or: [{ _id: id }, { email }] });
+    console.log("Model: ", Model);
 
-  
+    // Query based on `phedId` or `email`
+    const user = await Model.findOne({ $or: [{ phedId: id }, { email }] });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     // Verify the password
-    // const isMatch = await bcrypt.compare(password, user.password);
-
-    console.log('Plaintext password:', password);
-    console.log('Hashed password from database:', user.password);
+    console.log("Plaintext password:", password);
+    console.log("Hashed password from database:", user.password);
     
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log('Do passwords match?', isMatch);
-    
+    console.log("Do passwords match?", isMatch);
 
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });

@@ -21,7 +21,7 @@ const { authenticate } = require("../middleweres/isAuthenticate");
 const router = express.Router();
 
 router.route("/register").post(registerPhed); // Register a new Phed
-router.route("/:phedId").put(updatePhed); // Update Phed details
+router.put("/update" , authenticate,  updatePhed); // Update Phed details
 router.get("/gplist", authenticate, getGpList); // Get GP list
 router.get("/gp-assets", authenticate, getGpListWithAssets); // Get GP list with assets
 router.get("/gps-inventory", authenticate, getGpInventoryList); // Get GP list with inventory
