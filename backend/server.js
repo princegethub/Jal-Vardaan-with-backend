@@ -5,9 +5,9 @@ const bcrypt = require('bcryptjs');
 const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
 const connectDB = require('./config/dbConnection');
-const phedRoute  = require('./routers/phedRoutes');
-const authRoute  = require('./routers/authRoutes');
-const assetRoutes = require('./routers/assetRoutes');
+const phedRoute = require('./routers/phedRoutes');
+const authRoute = require('./routers/authRoutes');
+const grampanchyatRoute = require('./routers/grampanchyatRoutes');
 
 dotenv.config();
 const app = express();
@@ -17,17 +17,20 @@ const port = process.env.PORT || 3000;
 connectDB();
 
 // Middlewares
-app.use(express.json());
+app.use(express.json());   
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors({
+  origin: ['http://local host:5173', 'http://localhost:3001'],
+}));
 app.use(cookieParser());
+
+
+
 
 // API Routes
 app.use("/api/v1/phed", phedRoute);
-// app.use("/v1/api/grampanchayat", require('./routers/gramPanchyat'));
-// app.use("/v1/api/user", require('./routers/user.js'));
+app.use("/api/v1/gp", grampanchyatRoute);
 app.use("/api/v1", authRoute);
-app.use('/api/v1/assets', assetRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
@@ -39,11 +42,6 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Something broke!');
 });
-
-
-
-
-
 
 // Start the server
 app.listen(port, () => {

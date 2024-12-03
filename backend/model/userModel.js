@@ -1,17 +1,17 @@
 const mongoose = require("mongoose");
-const { hashPassword, updateUpdatedAt } = require("../middleweres/Hashing.js");
-
-
-
 
 // User Schema
 const UserSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true, default: "text@123" },
-  role: { type: String, default: "USER" },
-  consumerId: { type: String, unique: true },
+  consumerId: { type: String, unique: true }, // Unique identifier for the user
   consumerName: { type: String, required: true },
-  profilePicture: String,
+  contact: { type: String, required: true, unique: true }, // Unique contact number
+  password: { type: String, required: true }, 
+  role: { type: String, default: "USER" },
+  address: { type: String, required: true },
+  profilePicture: {
+    type: String,
+    default: 'https://static.vecteezy.com/system/resources/previews/022/450/297/original/3d-minimal-purple-user-profile-avatar-icon-in-circle-white-frame-design-vector.jpg',
+  },
   notification: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -20,29 +20,17 @@ const UserSchema = new mongoose.Schema({
     },
   ],
   complaint: [
-    { type: mongoose.Schema.Types.ObjectId, ref: "userComplaint", index: true },
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "userComplaint",
+      index: true,
+    },
   ],
-  address: { type: String, required: true },
   firebaseToken: String,
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
 
-// Apply middleware
-// UserSchema.pre("save", hashPassword);
-// UserSchema.pre('findOneAndUpdate', updateUpdatedAt);
-UserSchema.pre('save', async function (next) {
-  // Generate a unique consumerId
-  if (!this.consumerId) {
-    this.consumerId = uuidv4();  // Generate a unique consumer ID using uuid
-  }
-  next();
-});
-
-// Method to check if the provided password matches the hashed password
-// UserSchema.methods.matchPassword = async function (enteredPassword) {
-//   return await bcrypt.compare(enteredPassword, this.password);
-// };
 
 const UserComplaintSchema = new mongoose.Schema({
   category: { type: String, required: true },

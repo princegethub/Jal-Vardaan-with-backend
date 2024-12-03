@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const { v4: uuidv4 } = require("uuid"); // Import uuid for unique ID generation
-const { hashPassword, updateUpdatedAt } = require("../middleweres/Hashing.js");
 
 
 // PHED Schema
@@ -18,6 +17,7 @@ const { hashPassword, updateUpdatedAt } = require("../middleweres/Hashing.js");
   gpList: [{ type: mongoose.Schema.Types.ObjectId, ref: "Gp", index: true }],
   requestFund: [{ type: mongoose.Schema.Types.ObjectId, ref: "FundRequest", index: true }],
   firebaseToken: String,
+  
   financeOverview: [
     {
       gpId: { type: mongoose.Schema.Types.ObjectId, ref: "Gp", required: true },
@@ -25,18 +25,13 @@ const { hashPassword, updateUpdatedAt } = require("../middleweres/Hashing.js");
       expenditure: [{ type: mongoose.Schema.Types.ObjectId, ref: "Expenditure" }],
     },
   ],
+
+  phedAssest : [{ type: mongoose.Schema.Types.ObjectId, ref: "Asset"}],
+  phedInventory : [{ type: mongoose.Schema.Types.ObjectId, ref: "Inventory"}],
+
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
-
-// Middleware to hash password before saving and set updatedAt
-// Apply middleware
-// PhedSchema.pre("save", hashPassword);
-// PhedSchema.pre('findOneAndUpdate', updateUpdatedAt);
-// // Method to check if the provided password matches the hashed password
-// PhedSchema.methods.matchPassword = async function (enteredPassword) {
-//   return await bcrypt.compare(enteredPassword, this.password);
-// };
 
 
 // Phed Announcement Schema

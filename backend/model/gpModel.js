@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { hashPassword, updateUpdatedAt } = require("../middleweres/Hashing.js");
+
 
 
 // GP Schema
@@ -16,7 +16,7 @@ const GpSchema = new mongoose.Schema({
   password: { type: String, required: true },
   lgdCode: { type: String, required: true },
   role: { type: String, default: "GP" },
-  profilePicture: { type: String },
+  profilePicture: {type: String, default: 'https://static.vecteezy.com/system/resources/previews/022/450/297/original/3d-minimal-purple-user-profile-avatar-icon-in-circle-white-frame-design-vector.jpg'},
   alert: [
     { type: mongoose.Schema.Types.ObjectId, ref: "UserComplaint", index: true },
   ],
@@ -30,7 +30,8 @@ const GpSchema = new mongoose.Schema({
   userList: [
     { type: mongoose.Schema.Types.ObjectId, ref: "User", index: true },
   ],
-  assets: [{ type: mongoose.Schema.Types.ObjectId, ref: "AssetPhed", index: true }],
+  inactiveUserList:[],
+  assets: [{ type: mongoose.Schema.Types.ObjectId, ref: "Asset", index: true }],
   inventory: [
     { type: mongoose.Schema.Types.ObjectId, ref: "Inventory", index: true },
   ],
@@ -62,7 +63,9 @@ const GpSchema = new mongoose.Schema({
 
 // Asset Schema
 const AssetSchema = new mongoose.Schema({
+  gpLgdCode: { type: String, required: true },
   assetName: { type: String, required: true },
+  AssetQuantity: {type: Number , require: true},
   assetCategory: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
@@ -70,9 +73,10 @@ const AssetSchema = new mongoose.Schema({
 
 // Inventory Schema
 const InventorySchema = new mongoose.Schema({
+  gpLgdCode: { type: String, required: true },
   inventoryName: { type: String, required: true },
   inventoryCategory: { type: String, required: true },
-  inventoryQuantity: { type: String }, // Fixed type definition
+  inventoryQuantity: {type: Number , require: true},
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
@@ -108,6 +112,7 @@ const GpAnnouncementSchema = new mongoose.Schema({
 const GpComplaintSchema = new mongoose.Schema({
   category: { type: String, required: true },
   message: { type: String, required: true },
+  status: { type:Boolean, default: false},
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
@@ -120,13 +125,6 @@ const FundRequestSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-// Password hashing middleware for GP Schema
-// Apply middleware
-// GpSchema.pre("save", hashPassword);
-// GpSchema.pre("findOneAndUpdate", updateUpdatedAt);
-// GpSchema.methods.matchPassword = async function (enteredPassword) {
-//   return await bcrypt.compare(enteredPassword, this.password);
-// };
 
 
 

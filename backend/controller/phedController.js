@@ -1,4 +1,7 @@
 const { Phed, PhedAnnouncement } = require("../model/phedModel");
+
+
+
 const {
   Grampanchayat,
   Asset,
@@ -238,80 +241,49 @@ const getGpInventoryList = async (req, res) => {
   }
 };
 
-// Ek specific GP ke alerts ko fetch karne ka function
-const getAllAlertsForPhed = async (req, res) => {
-  try {
-    const phedId = req.user.id; // Assuming PHED ID is stored in `req.user`
 
-    // Find PHED and populate GP complaints (alerts)
-    const phed = await Phed.findOne({ _id: phedId }).populate({
-      path: "gpList",
-      populate: {
-        path: "complaint",
-        model: "GpComplaint",
-      },
-    });
-
-    if (!phed) {
-      return res.status(404).json({ message: "PHED not found" });
-    }
-
-    // Extract complaints (alerts) from all GPs
-    const allAlerts = phed.gpList.flatMap((gp) => gp.complaint);
-
-    res.status(200).json({
-      success: true,
-      data: allAlerts, // All complaints (alerts) from all GPs
-    });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "Internal Server Error", error: error.message });
-  }
-};
 
 // Create a new announcement
+
+
+// Create a new PHED Announcement and notify GPs
 const createPhedAnnouncement = async (req, res) => {
   try {
     const phedId = req.user.id; // Assuming phedId comes from logged-in PHED user
-    const { gpId, message } = req.body;
+    const { category, message } = req.body;
 
-    if (!gpId || !message) {
-      return res
-        .status(400)
-        .json({ message: "GP ID and message are required" });
-    }
+    // Create the new announcement
+    const newAnnouncement = new PhedAnnouncement({ category, message });
+    const savedAnnouncement = await newAnnouncement.save();
 
-    // Create a new announcement
-    const newAnnouncement = await PhedAnnouncement.create({
-      gpId,
-      message,
-    });
-
-    // Add the announcement reference to the PHED's announcement array
-    const phed = await Phed.findOneAndUpdate(
-      { _id: phedId },
-      { $push: { announcement: newAnnouncement._id } },
-      { new: true }
-    );
+    // Find the PHED to update and get its gpList
+    const phed = await Phed.findById(phedId).select("gpList announcement");
 
     if (!phed) {
       return res.status(404).json({ message: "PHED not found" });
     }
 
+    // Update the PHED's announcements array
+    phed.announcement.push(savedAnnouncement._id);
+    await phed.save();
+
+    // Notify all GPs in the PHED's gpList
+    await Grampanchayat.updateMany(
+      { _id: { $in: phed.gpList } }, // Match all GPs in the PHED's gpList
+      { $push: { notification: savedAnnouncement._id } } // Push the announcement ID to their alert array
+    );
+
     res.status(201).json({
       success: true,
-      message: "Announcement created successfully",
-      data: newAnnouncement,
+      message: "Announcement created and GPs notified",
+      data: savedAnnouncement,
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ message: "Internal Server Error", error: error.message });
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 };
+
 
 // Get all announcements for a PHED
 const getPhedAnnouncements = async (req, res) => {
@@ -349,9 +321,7 @@ const deletePhedAnnouncement = async (req, res) => {
     }
 
     // Delete the announcement
-    const deletedAnnouncement = await PhedAnnouncement.findByIdAndDelete(
-      announcementId
-    );
+    const deletedAnnouncement = await PhedAnnouncement.findByIdAndDelete(announcementId);
 
     if (!deletedAnnouncement) {
       return res.status(404).json({ message: "Announcement not found" });
@@ -363,15 +333,22 @@ const deletePhedAnnouncement = async (req, res) => {
       { $pull: { announcement: announcementId } }
     );
 
+    // Remove the announcement reference from all GPs' alert arrays
+    await Grampanchayat.updateMany(
+      { notification: announcementId },
+      { $pull: { alert: announcementId } }
+    );
+
     res.status(200).json({
       success: true,
-      message: "Announcement deleted successfully",
+      message: "Announcement deleted successfully and GPs updated",
     });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ message: "Internal Server Error", error: error.message });
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: error.message,
+    });
   }
 };
 
@@ -425,7 +402,7 @@ const getFinanceOverview = async (req, res) => {
 const addGp = async (req, res) => {
   try {
     const phedId = req.user.id; // Ensure the request is from a PHED user
-    console.log('phedId: ', phedId);
+
 
     const {
       state,
@@ -436,7 +413,7 @@ const addGp = async (req, res) => {
       aadhar,
       contact,
       email, // Added the email field
-      password,
+
       userType = "GP",
     } = req.body;
 
@@ -446,14 +423,14 @@ const addGp = async (req, res) => {
 
     // Validate required fields
     if (
-      !state ||
-      !district ||
-      !villageName ||
-      !lgdCode ||
-      !name ||
-      !aadhar ||
-      !contact ||
-      !password
+      !state &&
+      !district &&
+      !villageName &&
+      !lgdCode &&
+      !name &&
+      !aadhar &&
+      !contact 
+    
     ) {
       return res.status(400).json({ message: "All fields are required except email." });
     }
@@ -466,7 +443,6 @@ const addGp = async (req, res) => {
         { email: email } // Check for email duplicates
       ],
     });
-    console.log('existingGp: ', existingGp);
     if (existingGp) {
       const duplicateFields = [];
       if (existingGp.lgdCode === lgdCode) duplicateFields.push('LGD Code');
@@ -478,6 +454,20 @@ const addGp = async (req, res) => {
       });
     }
 
+    // Current date ko format karte hain (yyMMdd)
+    const datePart =
+      new Date().getFullYear().toString().slice(-2) +
+      ("0" + (new Date().getMonth() + 1)).slice(-2) +
+      ("0" + new Date().getDate()).slice(-2);
+
+    // Random 4-digit number generate karte hain
+    const randomPart = Math.floor(1000 + Math.random() * 9000);
+
+    // Final GP ID banate hain
+    const grampanchayatId = `GP${datePart}${randomPart}`;
+
+    const password = await bcrypt.hash("test@123", 10);
+
     // Create new GP with a unique `grampanchayatId`
     const newGp = new Grampanchayat({
       state,
@@ -487,7 +477,7 @@ const addGp = async (req, res) => {
       name,
       aadhar,
       contact,
-      grampanchayatId: uuidv4(),
+      grampanchayatId,
       email, // Added the email field
       password,
       createdBy: phedId, // Track which PHED user created this GP
@@ -621,6 +611,338 @@ const phedProfile = async (req, res) => {
   }
 };
 
+
+
+
+
+
+
+// Add Asset
+const addAsset = async (req, res) => {
+  try {
+    const { gpLgdCode, assetName, assetCategory, AssetQuantity } = req.body;
+
+    // Create new asset
+    const newAsset = new Asset({
+      gpLgdCode,
+      assetName,
+      assetCategory,
+      AssetQuantity,
+    });
+
+    
+    // Update PHED model
+    await Phed.findByIdAndUpdate(req.user.id, {
+      $push: { phedAssest: savedAsset._id },
+    });
+    
+    // Update GP model
+    const gp = await Grampanchayat.findOneAndUpdate(
+      { lgdCode: gpLgdCode },
+      { $push: { assets: savedAsset._id } },
+      { new: true }
+    );
+    
+    if (!gp) {
+      return res.status(404).json({ message: "GP not found" });
+    }
+    const savedAsset = await newAsset.save();
+    
+    res.status(201).json({
+      message: "Asset added successfully",
+      asset: savedAsset,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error adding asset", error });
+  }
+};
+
+// Edit Asset
+const updateAsset = async (req, res) => {
+  try {
+    const  id  = req.params.assetId;
+
+    const { assetName, assetCategory, AssetQuantity } = req.body;
+
+    const updatedAsset = await Asset.findByIdAndUpdate(
+      id,
+      { assetName, assetCategory, AssetQuantity },
+      { new: true }
+    );
+
+    if (!updatedAsset) {
+      return res.status(404).json({ message: "Asset not found" });
+    }
+
+    res.status(200).json({
+      message: "Asset updated successfully",
+      asset: updatedAsset,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error updating asset", error });
+  }
+};
+
+// Delete Asset
+const deleteAsset = async (req, res) => {
+  try {
+    const  id  = req.params.assetId;
+
+    const asset = await Asset.findByIdAndDelete(id);
+
+    if (!asset) {
+      return res.status(404).json({ message: "Asset not found" });
+    }
+
+    // Remove from PHED model
+    await Phed.findByIdAndUpdate(req.user.id, {
+      $pull: { phedAssest: asset._id },
+    });
+
+    // Remove from GP model
+    await Grampanchayat.findOneAndUpdate(
+      { lgdCode: asset.gpLgdCode },
+      { $pull: { assets: asset._id } }
+    );
+
+    res.status(200).json({ message: "Asset deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error deleting asset", error });
+  }
+};
+
+
+
+
+
+
+// Add Inventory
+const addInventory = async (req, res) => {
+  try {
+    const { gpLgdCode, inventoryName, inventoryCategory, inventoryQuantity } = req.body;
+
+    // Create a new inventory entry
+    const newInventory = await Inventory.create({
+      gpLgdCode,
+      inventoryName,
+      inventoryCategory,
+      inventoryQuantity,
+    });
+
+    // Add inventory to the respective GP
+    const gp = await Grampanchayat.findOneAndUpdate(
+      { lgdCode: gpLgdCode },
+      { $push: { inventory: newInventory._id } },
+      { new: true }
+    );
+
+    // Add inventory to the PHED inventory list
+    const phed = await Phed.findByIdAndUpdate(
+      req.user.id, // Assuming `req.user.id` contains the authenticated PHED's ID
+      { $push: { phedInventory: newInventory._id } },
+      { new: true }
+    );
+
+    if (!gp) return res.status(404).json({ message: "GP not found" });
+    if (!phed) return res.status(404).json({ message: "PHED not found" });
+
+    res.status(201).json({ message: "Inventory added successfully", inventory: newInventory });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error adding inventory", error: error.message });
+  }
+};
+
+// Update Inventory
+const updateInventory = async (req, res) => {
+  try {
+    const { inventoryId } = req.params;
+    const { inventoryName, inventoryCategory, inventoryQuantity } = req.body;
+
+    const updatedInventory = await Inventory.findByIdAndUpdate(
+      inventoryId,
+      { inventoryName, inventoryCategory, inventoryQuantity },
+      { new: true }
+    );
+
+    if (!updatedInventory) return res.status(404).json({ message: "Inventory not found" });
+
+    res.status(200).json({ message: "Inventory updated successfully", inventory: updatedInventory });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error updating inventory", error: error.message });
+  }
+};
+
+// Delete Inventory
+const deleteInventory = async (req, res) => {
+  try {
+    const { inventoryId } = req.params;
+
+    // Remove inventory from the database
+    const deletedInventory = await Inventory.findByIdAndDelete(inventoryId);
+    if (!deletedInventory) return res.status(404).json({ message: "Inventory not found" });
+
+    // Remove inventory reference from GP and PHED
+    await Grampanchayat.updateOne({ inventory: inventoryId }, { $pull: { inventory: inventoryId } });
+    await Phed.updateOne({ phedInventory: inventoryId }, { $pull: { phedInventory: inventoryId } });
+
+    res.status(200).json({ message: "Inventory deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error deleting inventory", error: error.message });
+  }
+};
+
+
+
+
+
+const getPhedAssetOverview = async (req, res) => {
+  try {
+    const phed = await Phed.findById(req.user.id).populate("phedAssest");
+
+    if (!phed) {
+      return res.status(404).json({ message: "PHED not found" });
+    }
+
+    const grampanchayats = await Grampanchayat.find({}, "name grampanchayatId assets")
+      .populate("assets", "assetName inventoryQuantity");
+
+    let totalAssets = {};
+    let gpDetails = [];
+
+    grampanchayats.forEach((gp) => {
+      let gpAssetSummary = {
+        gpName: gp.name,
+        grampanchayatId: gp.grampanchayatId,
+        assets: [],
+        totalQuantity: 0,
+      };
+
+      gp.assets.forEach((asset) => {
+        const { assetName, inventoryQuantity } = asset;
+
+        gpAssetSummary.assets.push({ assetName, quantity: inventoryQuantity });
+        gpAssetSummary.totalQuantity += inventoryQuantity;
+
+        if (!totalAssets[assetName]) {
+          totalAssets[assetName] = { totalQuantity: 0 };
+        }
+        totalAssets[assetName].totalQuantity += inventoryQuantity;
+      });
+
+      gpDetails.push(gpAssetSummary);
+    });
+
+    res.status(200).json({
+      phedName: phed.name,
+      totalAssets,
+      gpDetails,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching PHED asset overview", error: error.message });
+  }
+};
+
+
+
+const getPhedInventoryOverview = async (req, res) => {
+  try {
+    // Fetch PHED's inventory details
+    const phed = await Phed.findById(req.user.id).populate("phedInventory");
+
+    if (!phed) {
+      return res.status(404).json({ message: "PHED not found" });
+    }
+
+    // Fetch all Grampanchayats with their inventory data
+    const grampanchayats = await Grampanchayat.find({}, "name grampanchayatId inventory")
+      .populate("inventory", "inventoryName inventoryQuantity");
+
+    let totalInventories = {};
+    let gpDetails = [];
+
+    grampanchayats.forEach((gp) => {
+      let gpInventorySummary = {
+        gpName: gp.name,
+        grampanchayatId: gp.grampanchayatId,
+        inventories: [],
+        totalQuantity: 0,
+      };
+
+      gp.inventory.forEach((inventory) => {
+        const { inventoryName, inventoryQuantity } = inventory;
+
+        // Add inventory details to the GP's summary
+        gpInventorySummary.inventories.push({ inventoryName, quantity: inventoryQuantity });
+        gpInventorySummary.totalQuantity += inventoryQuantity;
+
+        // Update the totalInventories summary
+        if (!totalInventories[inventoryName]) {
+          totalInventories[inventoryName] = { totalQuantity: 0 };
+        }
+        totalInventories[inventoryName].totalQuantity += inventoryQuantity;
+      });
+
+      gpDetails.push(gpInventorySummary);
+    });
+
+    // Prepare the response
+    res.status(200).json({
+      phedName: phed.name,
+      totalInventories,
+      gpDetails,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching PHED inventory overview", error: error.message });
+  }
+};
+
+const getPhedFundRequests = async (req, res) => {
+  try {
+    const phed = await Phed.findOne().populate("requestFund");
+    if (!phed) {
+      return res.status(404).json({ message: "PHED not found." });
+    }
+
+    res.status(200).json({ fundRequests: phed.requestFund });
+  } catch (error) {
+    console.error("Error fetching PHED fund requests:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
+// Get all alerts for the logged-in PHED
+const getPhedAlerts = async (req, res) => {
+  try {
+    const phedId = req.user.id; // Assuming the PHED's ID comes from the authenticated user
+
+    // Find the PHED and populate the alert field with the actual complaint data
+    const phed = await Phed.findById(phedId).populate({
+      path: "alert",
+      model: "GpComplaint",
+    });
+
+    if (!phed) {
+      return res.status(404).json({ message: "PHED not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: phed.alert,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
+
 module.exports = {
   registerPhed,
   updatePhed, // Export the register controller function
@@ -628,7 +950,7 @@ module.exports = {
   getGpListWithAssets,
   getGpListWithAssetsAndInventory,
   getGpInventoryList,
-  getAllAlertsForPhed,
+  
   createPhedAnnouncement,
   getPhedAnnouncements,
   deletePhedAnnouncement,
@@ -638,4 +960,8 @@ module.exports = {
   deleteGp,
   viewGpDetails,
   phedProfile,
+  addAsset,
+  updateAsset,
+  deleteAsset,
+  addInventory, updateInventory, deleteInventory ,getPhedAssetOverview,getPhedInventoryOverview, getPhedFundRequests, getPhedAlerts
 };
