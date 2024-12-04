@@ -34,7 +34,7 @@ const loginUser = async (req, res) => {
     } else if (userType === "USER") {
       query = { consumerId: id };
     }
-    console.log('query: ', query);
+  
 
     // Query the database based on the constructed query
     const user = await Model.findOne({ $or: [query, { email }] });
