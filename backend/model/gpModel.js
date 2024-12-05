@@ -52,14 +52,14 @@ const GpSchema = new mongoose.Schema({
   state: { type: String, required: true },
   district: { type: String, required: true },
   villageName: { type: String, required: true },
-  aadhar: { type: String, unique: true },
+  aadhar: { type: Number, unique: true },
   income: [{ type: mongoose.Schema.Types.ObjectId, ref: "Income" }],
   expenditure: [{ type: mongoose.Schema.Types.ObjectId, ref: "Expenditure" }],
   firebaseToken: String,
   status: { type: Number, default: 1 },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-});
+}, { timestamps: true }); ;
 
 // Asset Schema
 const AssetSchema = new mongoose.Schema({

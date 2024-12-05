@@ -123,8 +123,11 @@ const getGpList = async (req, res) => {
   try {
     const { id } = req.user; // Extract `id` from the route parameter
 
-    // Find the PHED user and populate the gpList
-    const phed = await Phed.findOne({ _id: id }).populate("gpList");
+    // Find the PHED user and populate the gpList, sorted by createdAt descending
+    const phed = await Phed.findOne({ _id: id }).populate({
+      path: "gpList",
+      options: { sort: { createdAt: -1 } }, // Sort by createdAt in descending order
+    });
 
     if (!phed) {
       return res.status(404).json({ message: "PHED user not found." });
@@ -142,6 +145,7 @@ const getGpList = async (req, res) => {
       .json({ message: "Server error. Please try again later." });
   }
 };
+
 
 const getGpListWithAssets = async (req, res) => {
   try {
@@ -503,7 +507,7 @@ const addGp = async (req, res) => {
 const updateGp = async (req, res) => {
   try {
     const  phedId  = req.user.id; // Ensure the request is from a PHED user
-    const { gpId } = req.params;
+    const { id } = req.params;
     const { villageName, name, contact, lgdCode, aadhar } = req.body;
 
     if (!phedId) {
@@ -516,7 +520,7 @@ const updateGp = async (req, res) => {
 
     // Find and update GP
     const updatedGp = await Grampanchayat.findByIdAndUpdate(
-      gpId,
+      {_id:id},
       { villageName, name, contact, lgdCode, aadhar },
       { new: true }
     );
@@ -569,7 +573,7 @@ const viewGpDetails = async (req, res) => {
 
     // Fetch GP list
     const gps = await Grampanchayat.find().select(
-      "name lgdCode state district villageName contact"
+      "name lgdCode state district aadhar villageName contact"
     );
 
     res.status(200).json({ message: "GPs fetched successfully", gps });
@@ -580,6 +584,27 @@ const viewGpDetails = async (req, res) => {
       .json({ message: "Internal Server Error", error: error.message });
   }
 };
+const viewSingleGpDetails = async (req, res) => {
+  try {
+
+    const { gpId } = req.params;
+
+    // Fetch GP list
+    const gps = await Grampanchayat.findOne({_id: gpId}).select(
+      "name lgdCode aadhar villageName contact"
+    );
+    console.log(gps);
+    
+    res.status(200).json({ message: "GPs fetched successfully", data:gps });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
+
 
 const phedProfile = async (req, res) => {
   try {
@@ -963,5 +988,6 @@ module.exports = {
   addAsset,
   updateAsset,
   deleteAsset,
-  addInventory, updateInventory, deleteInventory ,getPhedAssetOverview,getPhedInventoryOverview, getPhedFundRequests, getPhedAlerts
+  addInventory, updateInventory, deleteInventory ,getPhedAssetOverview,getPhedInventoryOverview, getPhedFundRequests, getPhedAlerts,
+  viewSingleGpDetails
 };

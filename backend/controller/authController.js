@@ -15,7 +15,7 @@ const loginUser = async (req, res) => {
     const { userType, id, email, password } = req.body;
 
     // Check if all required fields are present
-    if (!userType && !id && !email && !password) {
+    if (!userType && (!id || !email) && !password) {
       return res.status(400).json({ message: "Missing required fields. Please check your input." });
     }
 
@@ -37,7 +37,7 @@ const loginUser = async (req, res) => {
   
 
     // Query the database based on the constructed query
-    const user = await Model.findOne({ $or: [query, { email }] });
+    const user = await Model.findOne({ $or: [query, { email: email }] });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });

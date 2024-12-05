@@ -25,6 +25,7 @@ const {
   getPhedInventoryOverview,
   getPhedAssetOverview,
   getPhedFundRequests,
+  viewSingleGpDetails,
 } = require("../controller/phedController");
 const { authenticate } = require("../middleweres/isAuthenticate");
 
@@ -46,9 +47,10 @@ router.get("/gp-assets", authenticate, getGpListWithAssets); // Get GP list with
 router.get("/gps-inventory", authenticate, getGpInventoryList); // Get GP list with inventory
 router.get("/gps-assestinventory", authenticate, getGpListWithAssetsAndInventory); // Get GP list with assets and inventory
 router.post("/gp-add", authenticate, addGp); // Add a new GP
-router.put("/gp-update/:gpId", authenticate, updateGp); // Update GP details
+router.put("/gp-update/:id", authenticate, updateGp); // Update GP details
 router.delete("/gp-delete/:gpId", authenticate, deleteGp); // Delete GP
 router.get("/gp-details", authenticate, viewGpDetails); // View GP details
+router.get("/gp-details/:gpId", authenticate, viewSingleGpDetails); // View GP details
 
 /**
  * Announcement Routes
